@@ -1,16 +1,9 @@
 [
   {
     "type": "youtube",
-    "link": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "title": "Ancient Crypts",
-    "artist": "Forgotten Wizard",
-    "description": "Debut album from mysterious solo project"
+    "link": "https://www.youtube.com/watch?v=OxgVmpAk538",
+    "title": "Depressive Silence II (1996)",
+    "artist": "Depressive Silence",
   },
-  {
-    "type": "bandcamp",
-    "link": "https://dungeonsynth.bandcamp.com/track/mystical-forest",
-    "title": "Mystical Forest",
-    "artist": "Tower of Sorcery"
-  }
 ]
 

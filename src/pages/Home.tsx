@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Tabs, Paper, Grid, Loader, Alert, Title } from '@mantine/core';
+import { Tabs, Paper, Grid, Loader, Alert, Title, useMantineTheme, Container } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 
 interface MediaItem {
   type: 'youtube' | 'bandcamp' | 'soundcloud';
@@ -12,7 +13,8 @@ interface MediaItem {
 const TABS = ['releases', 'mixes', 'interviews'] as const;
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<typeof TABS[number]>('releases');
+  const theme = useMantineTheme();
+  const [activeTab, setActiveTab] = useState<string | null>('releases');
   const [content, setContent] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +34,11 @@ export default function Home() {
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load content');
+        Notifications.show({
+          title: 'Manifestation Failure',
+          message: 'The runes resist interpretation',
+          color: 'red',
+        });
       } finally {
         setLoading(false);
       }
@@ -41,84 +48,157 @@ export default function Home() {
   }, [activeTab]);
 
   const renderEmbed = (item: MediaItem) => {
-    const commonProps = {
-      style: { border: 0, borderRadius: '4px', marginBottom: '1rem' },
-      allow: 'encrypted-media; fullscreen',
-    };
+    const isVertical = item.type === 'bandcamp';
 
-    switch (item.type) {
-      case 'youtube':
-        return (
+    return (
+      <Paper
+        style={{
+          borderColor: theme.colors.dark[4],
+        }}
+      >
+        <div style={{
+          position: 'relative',
+          paddingBottom: isVertical ? '120%' : '56.25%',
+          height: 0,
+          overflow: 'hidden'
+        }}>
           <iframe
-            {...commonProps}
-            width="100%"
-            height="315"
-            src={`https://www.youtube.com/embed/${extractYoutubeId(item.link)}`}
-            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 0
+            }}
+            src={(() => {
+              switch (item.type) {
+                case 'youtube':
+                  return `https://www.youtube.com/embed/${extractYoutubeId(item.link)}`;
+                case 'soundcloud':
+                  return `https://w.soundcloud.com/player/?url=${encodeURIComponent(item.link)}`;
+                case 'bandcamp':
+                  return `https://bandcamp.com/EmbeddedPlayer/track=${extractBandcampId(item.link)}/size=large/bgcol=333333/linkcol=ffffff/artwork=none/`;
+              }
+            })()}
+            allow="encrypted-media; fullscreen"
           />
-        );
+        </div>
 
-      case 'soundcloud':
-        return (
-          <iframe
-            {...commonProps}
-            width="100%"
-            height="166"
-            scrolling="no"
-            src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(item.link)}`}
-          />
-        );
+        <Container p="md">
+          {item.title && (
+            <Title
+              order={4}
+              style={{
+                fontFamily: 'Georama, sans-serif',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {item.title}
+            </Title>
+          )}
 
-      case 'bandcamp':
-        return (
-          <iframe
-            {...commonProps}
-            src={`https://bandcamp.com/EmbeddedPlayer/track=${extractBandcampId(item.link)}/size=large/bgcol=333333/linkcol=ffffff/artwork=none/`}
-            height="310"
-            width="100%"
-          />
-        );
+          {item.artist && (
+            <div style={{
+              fontFamily: 'Georama, sans-serif',
+              fontSize: theme.fontSizes.sm,
+              fontWeight: 500,
+              marginBottom: theme.spacing.xs
+            }}>
+              {item.artist}
+            </div>
+          )}
 
-      default:
-        return <Alert color="red">Unsupported media type</Alert>;
-    }
+          {item.description && (
+            <div style={{
+              fontSize: theme.fontSizes.sm,
+              color: theme.colors.dark[3],
+              lineHeight: 1.4
+            }}>
+              {item.description}
+            </div>
+          )}
+        </Container>
+      </Paper>
+    );
   };
 
   return (
-    <Paper p="md" radius="md">
-      <Title order={2} mb="xl" /* align="center" */>
-        Dungeon Synth Archive
+    <Container size="md" py="xl">
+      <Title
+        order={1}
+        style={{
+          fontFamily: 'Cormorant SC, serif',
+          fontWeight: 600,
+          letterSpacing: '0.1em',
+          textAlign: 'center',
+          marginBottom: '1.5em',
+          color: theme.colors.dark[1]
+        }}
+      >
+        GRIMOIRE
+        <div style={{
+          fontSize: theme.fontSizes.sm,
+          fontWeight: 400,
+          letterSpacing: '0.2em',
+          marginTop: theme.spacing.xs,
+          color: theme.colors.dark[3]
+        }}>
+          ARCHIVUM SONORUM OCCULTUM
+        </div>
       </Title>
 
-      <Tabs value={activeTab} /* onChange={(t: typeof TABS[number]) => setActiveTab(t)} */>
-        <Tabs.List grow>
+      <Tabs
+        value={activeTab}
+        onChange={setActiveTab}
+        variant="default"
+      >
+        <Tabs.List style={{ borderBottom: `1px solid ${theme.colors.dark[4]}` }}>
           {TABS.map((tab) => (
-            <Tabs.Tab key={tab} value={tab}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <Tabs.Tab
+              key={tab}
+              value={tab}
+              style={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                fontSize: theme.fontSizes.sm,
+                padding: '0.5em 1em',
+                borderBottom: '2px solid transparent',
+                color: activeTab === tab ? theme.colors.dark[2] : theme.colors.dark[0],
+                ...(activeTab === tab && {
+                  borderBottomColor: theme.colors.dark[2]
+                })
+              }}
+            >
+              {tab}
             </Tabs.Tab>
           ))}
         </Tabs.List>
 
         {TABS.map((tab) => (
-          <Tabs.Panel key={tab} value={tab} pt="lg">
+          <Tabs.Panel key={tab} value={tab} pt="xl">
             {loading ? (
-              <Loader size="xl" variant="bars" mx="auto" display="block" />
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '1.5em'
+              }}>
+                <Loader size="lg" variant="dots" />
+              </div>
             ) : error ? (
-              <Alert color="red" title="Error">
+              <Alert
+                color="red"
+                variant="filled"
+                title="Chamber Sealed"
+                style={{ marginBottom: theme.spacing.xl }}
+              >
                 {error}
               </Alert>
             ) : (
-              <Grid>
+              <Grid gutter="xl">
                 {content.map((item, index) => (
-                  <Grid.Col key={index} /* md={6} lg={4} */>
-                    <Paper p="md" withBorder radius="md">
-                      {renderEmbed(item)}
-                      {item.title && <Title order={4}>{item.title}</Title>}
-                      {item.artist && <div>{item.artist}</div>}
-                      {item.description && (
-                        <div style={{ opacity: 0.8 }}>{item.description}</div>
-                      )}
-                    </Paper>
+                  <Grid.Col key={index} span={12}>
+                    {renderEmbed(item)}
                   </Grid.Col>
                 ))}
               </Grid>
@@ -126,7 +206,7 @@ export default function Home() {
           </Tabs.Panel>
         ))}
       </Tabs>
-    </Paper>
+    </Container>
   );
 }
 
